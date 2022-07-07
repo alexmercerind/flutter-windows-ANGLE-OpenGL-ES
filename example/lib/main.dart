@@ -13,6 +13,8 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  int? textureId;
+
   @override
   void initState() {
     super.initState();
@@ -22,11 +24,15 @@ class _MyAppState extends State<MyApp> {
   Future<void> initPlatformState() async {
     const channel =
         MethodChannel('com.alexmercerind/flutter_windows_angle_d3d_texture');
-    await channel.invokeMethod('CreateID3D11Device', {});
-    await channel.invokeMethod('ID3D11Device::CreateTexture2D', {});
-    await channel.invokeMethod('eglCreatePbufferFromClientBuffer', {});
-    await channel.invokeMethod('eglBindTexImage', {});
-    await channel.invokeMethod('glDrawArrays', {});
+    await channel.invokeMethod('CreateID3D11Device');
+    await channel.invokeMethod('ID3D11Device::CreateTexture2D');
+    await channel.invokeMethod('eglCreatePbufferFromClientBuffer');
+    await channel.invokeMethod('eglBindTexImage');
+    textureId = await channel
+        .invokeMethod('flutter::TextureRegistrar::RegisterTexture');
+    setState(() {});
+    await channel.invokeMethod('glDrawArrays');
+    debugPrint(textureId.toString());
   }
 
   @override
@@ -36,7 +42,14 @@ class _MyAppState extends State<MyApp> {
         appBar: AppBar(
           title: const Text('flutter_windows_angle_d3d_texture'),
         ),
-        body: const Center(),
+        body: Center(
+          child: textureId == null
+              ? null
+              : Texture(
+                  textureId: textureId!,
+                  filterQuality: FilterQuality.high,
+                ),
+        ),
       ),
     );
   }
