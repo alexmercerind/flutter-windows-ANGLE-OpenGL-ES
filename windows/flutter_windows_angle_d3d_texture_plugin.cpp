@@ -4,7 +4,7 @@
 #include <flutter/method_channel.h>
 #include <flutter/plugin_registrar_windows.h>
 #include <flutter/standard_method_codec.h>
-
+#include <flutter/texture_registrar.h>
 // Standard C++ STL
 #include <fstream>
 #include <iostream>
@@ -219,9 +219,9 @@ void FlutterWindowsAngleD3dTexturePlugin::HandleMethodCall(
         (count == 0)) {
       std::cerr << "eglChooseConfig FAILED." << std::endl;
     }
-    EGLContext context =
+    context_ =
         eglCreateContext(display_, config_, EGL_NO_CONTEXT, context_attributes);
-    if (context == EGL_NO_CONTEXT) {
+    if (context_ == EGL_NO_CONTEXT) {
       std::cerr << "eglCreateContext FAILED." << std::endl;
     }
     surface_ = eglCreatePbufferFromClientBuffer(
@@ -238,17 +238,46 @@ void FlutterWindowsAngleD3dTexturePlugin::HandleMethodCall(
     eglBindTexImage(display_, surface_, EGL_BACK_BUFFER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    result->Success(flutter::EncodableValue(nullptr));
+  } else if (method_call.method_name().compare(
+                 "flutter::TextureRegistrar::RegisterTexture") == 0) {
+    gpu_surface_descriptor_ =
+        std::make_unique<FlutterDesktopGpuSurfaceDescriptor>();
+    gpu_surface_descriptor_->struct_size =
+        sizeof(FlutterDesktopGpuSurfaceDescriptor);
+    gpu_surface_descriptor_->handle = shared_handle_;
+    gpu_surface_descriptor_->width = gpu_surface_descriptor_->visible_width =
+        kD3D11Texture2DWidth;
+    gpu_surface_descriptor_->height = gpu_surface_descriptor_->visible_height =
+        kD3D11Texture2DHeight;
+    gpu_surface_descriptor_->release_context = nullptr;
+    gpu_surface_descriptor_->release_callback = [](void* release_context) {};
+    gpu_surface_descriptor_->format = kFlutterDesktopPixelFormatNone;
+    gpu_surface_texture_ =
+        std::make_unique<flutter::TextureVariant>(flutter::GpuSurfaceTexture(
+            kFlutterDesktopGpuSurfaceTypeDxgiSharedHandle,
+            [&](size_t width,
+                size_t height) -> const FlutterDesktopGpuSurfaceDescriptor* {
+              return gpu_surface_descriptor_.get();
+            }));
+    auto texture_id =
+        texture_registrar_->RegisterTexture(gpu_surface_texture_.get());
+    texture_registrar_->MarkTextureFrameAvailable(texture_id);
+    result->Success(flutter::EncodableValue(texture_id));
   } else if (method_call.method_name().compare("glDrawArrays") == 0) {
+    if (eglMakeCurrent(display_, surface_, surface_, context_) == EGL_FALSE) {
+      std::cerr << "eglMakeCurrent FAILED." << std::endl;
+    }
     constexpr char kVertexShader[] = R"(attribute vec4 vPosition;
-void main()
-{
-    gl_Position = vPosition;
-})";
+    void main()
+    {
+        gl_Position = vPosition;
+    })";
     constexpr char kFragmentShader[] = R"(precision mediump float;
-void main()
-{
-    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
-})";
+    void main()
+    {
+        gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    })";
     GLuint program = CompileProgram(kVertexShader, kFragmentShader);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     GLfloat vertices[] = {

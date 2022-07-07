@@ -69,7 +69,11 @@ class FlutterWindowsAngleD3dTexturePlugin : public flutter::Plugin {
   HANDLE shared_handle_;
   EGLSurface surface_ = EGL_NO_SURFACE;
   EGLDisplay display_ = EGL_NO_DISPLAY;
+  EGLContext context_ = NULL;
   EGLConfig config_ = NULL;
+  std::unique_ptr<FlutterDesktopGpuSurfaceDescriptor> gpu_surface_descriptor_ =
+      nullptr;
+  std::unique_ptr<flutter::TextureVariant> gpu_surface_texture_ = nullptr;
 };
 
 }  // namespace flutter_windows_angle_d3d_texture
