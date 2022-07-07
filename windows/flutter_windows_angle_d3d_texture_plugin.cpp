@@ -263,24 +263,6 @@ void FlutterWindowsAngleD3dTexturePlugin::HandleMethodCall(
             }));
     texture_id_ =
         texture_registrar_->RegisterTexture(gpu_surface_texture_.get());
-    // Whatever.
-    std::thread([&]() {
-      while (true) {
-        std::cout << "texture_id_         : " << texture_id_ << std::endl;
-        std::cout << "EGLSurface          : " << surface_ << std::endl;
-        std::cout << "EGLDisplay          : " << display_ << std::endl;
-        std::cout << "EGLContext          : " << context_ << std::endl;
-        std::cout << "EGLConfig           : " << config_ << std::endl;
-        std::cout << "HANDLE              : " << shared_handle_ << std::endl;
-        std::cout << "ID3D11Device*       : " << d3d11_device_ << std::endl;
-        std::cout << "ID3D11DeviceContext : " << d3d11_device_context_
-                  << std::endl;
-        std::cout << "ID3D11Texture2D*    : " << d3d11_texture_2D_.Get()
-                  << std::endl;
-        texture_registrar_->MarkTextureFrameAvailable(texture_id_);
-        std::this_thread::sleep_for(std::chrono::seconds(5));
-      }
-    }).detach();
     result->Success(flutter::EncodableValue(texture_id_));
   } else if (method_call.method_name().compare("glDrawArrays") == 0) {
     if (eglMakeCurrent(display_, surface_, surface_, context_) == 0) {
@@ -300,7 +282,7 @@ void FlutterWindowsAngleD3dTexturePlugin::HandleMethodCall(
     std::cout << program << std::endl;
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     GLfloat vertices[] = {
-        0.0f, 0.5f, 0.0f, -0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f,
+        0.0f, -0.5f, 0.0f, -0.5f, 0.5f, 0.0f, 0.5f, 0.5f, 0.0f,
     };
     glViewport(0, 0, kD3D11Texture2DWidth, kD3D11Texture2DHeight);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -308,6 +290,11 @@ void FlutterWindowsAngleD3dTexturePlugin::HandleMethodCall(
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, vertices);
     glEnableVertexAttribArray(0);
     glDrawArrays(GL_TRIANGLES, 0, 3);
+    // |glFlush| must to be present.
+    // Maybe last line written at
+    // https://github.com/Microsoft/angle/wiki/Interop-with-other-DirectX-code#using-opengl-es-content-in-other-directx-rendering
+    // gives a bit of sense to this.
+    glFlush();
     result->Success(flutter::EncodableValue(nullptr));
   } else {
     result->NotImplemented();

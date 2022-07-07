@@ -32,7 +32,6 @@ class _MyAppState extends State<MyApp> {
     textureId = await channel
         .invokeMethod('flutter::TextureRegistrar::RegisterTexture');
     setState(() {});
-    debugPrint(textureId.toString());
   }
 
   @override
@@ -40,7 +39,9 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('flutter_windows_angle_d3d_texture'),
+          title: const Text(
+            'Flutter Windows ANGLE OpenGL+Direct3D Texture Interop',
+          ),
         ),
         body: Center(
           child: textureId == null
