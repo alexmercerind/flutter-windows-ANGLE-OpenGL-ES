@@ -74,6 +74,7 @@ class FlutterWindowsAngleD3dTexturePlugin : public flutter::Plugin {
   std::unique_ptr<FlutterDesktopGpuSurfaceDescriptor> gpu_surface_descriptor_ =
       nullptr;
   std::unique_ptr<flutter::TextureVariant> gpu_surface_texture_ = nullptr;
+  int64_t texture_id_ = 0;
 };
 
 }  // namespace flutter_windows_angle_d3d_texture

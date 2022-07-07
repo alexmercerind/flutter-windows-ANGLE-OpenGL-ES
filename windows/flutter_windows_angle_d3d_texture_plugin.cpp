@@ -8,6 +8,7 @@
 // Standard C++ STL
 #include <fstream>
 #include <iostream>
+#include <thread>
 #include <vector>
 
 #define STRING(s) #s
@@ -252,7 +253,7 @@ void FlutterWindowsAngleD3dTexturePlugin::HandleMethodCall(
         kD3D11Texture2DHeight;
     gpu_surface_descriptor_->release_context = nullptr;
     gpu_surface_descriptor_->release_callback = [](void* release_context) {};
-    gpu_surface_descriptor_->format = kFlutterDesktopPixelFormatNone;
+    gpu_surface_descriptor_->format = kFlutterDesktopPixelFormatBGRA8888;
     gpu_surface_texture_ =
         std::make_unique<flutter::TextureVariant>(flutter::GpuSurfaceTexture(
             kFlutterDesktopGpuSurfaceTypeDxgiSharedHandle,
@@ -260,12 +261,29 @@ void FlutterWindowsAngleD3dTexturePlugin::HandleMethodCall(
                 size_t height) -> const FlutterDesktopGpuSurfaceDescriptor* {
               return gpu_surface_descriptor_.get();
             }));
-    auto texture_id =
+    texture_id_ =
         texture_registrar_->RegisterTexture(gpu_surface_texture_.get());
-    texture_registrar_->MarkTextureFrameAvailable(texture_id);
-    result->Success(flutter::EncodableValue(texture_id));
+    // Whatever.
+    std::thread([&]() {
+      while (true) {
+        std::cout << "texture_id_         : " << texture_id_ << std::endl;
+        std::cout << "EGLSurface          : " << surface_ << std::endl;
+        std::cout << "EGLDisplay          : " << display_ << std::endl;
+        std::cout << "EGLContext          : " << context_ << std::endl;
+        std::cout << "EGLConfig           : " << config_ << std::endl;
+        std::cout << "HANDLE              : " << shared_handle_ << std::endl;
+        std::cout << "ID3D11Device*       : " << d3d11_device_ << std::endl;
+        std::cout << "ID3D11DeviceContext : " << d3d11_device_context_
+                  << std::endl;
+        std::cout << "ID3D11Texture2D*    : " << d3d11_texture_2D_.Get()
+                  << std::endl;
+        texture_registrar_->MarkTextureFrameAvailable(texture_id_);
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+      }
+    }).detach();
+    result->Success(flutter::EncodableValue(texture_id_));
   } else if (method_call.method_name().compare("glDrawArrays") == 0) {
-    if (eglMakeCurrent(display_, surface_, surface_, context_) == EGL_FALSE) {
+    if (eglMakeCurrent(display_, surface_, surface_, context_) == 0) {
       std::cerr << "eglMakeCurrent FAILED." << std::endl;
     }
     constexpr char kVertexShader[] = R"(attribute vec4 vPosition;
@@ -279,7 +297,8 @@ void FlutterWindowsAngleD3dTexturePlugin::HandleMethodCall(
         gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
     })";
     GLuint program = CompileProgram(kVertexShader, kFragmentShader);
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    std::cout << program << std::endl;
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     GLfloat vertices[] = {
         0.0f, 0.5f, 0.0f, -0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f,
     };

@@ -28,10 +28,10 @@ class _MyAppState extends State<MyApp> {
     await channel.invokeMethod('ID3D11Device::CreateTexture2D');
     await channel.invokeMethod('eglCreatePbufferFromClientBuffer');
     await channel.invokeMethod('eglBindTexImage');
+    await channel.invokeMethod('glDrawArrays');
     textureId = await channel
         .invokeMethod('flutter::TextureRegistrar::RegisterTexture');
     setState(() {});
-    await channel.invokeMethod('glDrawArrays');
     debugPrint(textureId.toString());
   }
 
