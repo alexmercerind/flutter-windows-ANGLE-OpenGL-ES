@@ -13,7 +13,8 @@
 extern "C" {
 #endif
 
-FLUTTER_PLUGIN_EXPORT void FlutterWindowsAngleD3dTexturePluginCApiRegisterWithRegistrar(
+FLUTTER_PLUGIN_EXPORT void
+FlutterWindowsAngleD3dTexturePluginCApiRegisterWithRegistrar(
     FlutterDesktopPluginRegistrarRef registrar);
 
 #if defined(__cplusplus)

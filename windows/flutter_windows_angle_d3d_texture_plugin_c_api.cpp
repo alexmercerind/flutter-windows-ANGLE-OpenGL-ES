@@ -6,7 +6,8 @@
 
 void FlutterWindowsAngleD3dTexturePluginCApiRegisterWithRegistrar(
     FlutterDesktopPluginRegistrarRef registrar) {
-  flutter_windows_angle_d3d_texture::FlutterWindowsAngleD3dTexturePlugin::RegisterWithRegistrar(
-      flutter::PluginRegistrarManager::GetInstance()
-          ->GetRegistrar<flutter::PluginRegistrarWindows>(registrar));
+  flutter_windows_angle_d3d_texture::FlutterWindowsAngleD3dTexturePlugin::
+      RegisterWithRegistrar(
+          flutter::PluginRegistrarManager::GetInstance()
+              ->GetRegistrar<flutter::PluginRegistrarWindows>(registrar));
 }
