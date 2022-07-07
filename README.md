@@ -5,7 +5,7 @@ Hardware accelerated rendering on Flutter Windows Texture Widget using OpenGL AP
 
 ## Introduction
 
-The main goal is to render stuff inside Flutter using OpenGL APIs. This in turn can be used to render hardware accelerated video-playback, a game's visual output etc.
+The main goal is to render stuff inside Flutter Windows using OpenGL APIs in a hardware-accelerated manner with GPU-backed buffers. This in turn can be used to render hardware accelerated video-playback, a game's visual output etc.
 
 [ANGLE (Almost Native Graphics Layer Engine)](https://github.com/google/angle) is used for this purpose, which translates these OpenGL calls to Direct3D (which Flutter Windows now supports) calls internally & performs rendering.
 
