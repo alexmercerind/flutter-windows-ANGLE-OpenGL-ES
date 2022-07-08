@@ -1,7 +1,7 @@
 # flutter-windows-ANGLE-OpenGL-Direct3D-Interop
 Hardware accelerated rendering on Flutter Windows Texture Widget using OpenGL APIs from ANGLE. 
 
-![flutter_windows_angle_d3d_texture_example_jDdrXGR6ss](https://user-images.githubusercontent.com/28951144/177827046-35d2599e-6162-49a0-989f-048dc3b40bb5.png)
+<p align='center'><img src='https://user-images.githubusercontent.com/28951144/177827046-35d2599e-6162-49a0-989f-048dc3b40bb5.png'></img></p>
 
 ## Introduction
 
