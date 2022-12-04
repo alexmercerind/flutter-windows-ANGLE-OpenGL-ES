@@ -13,24 +13,21 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  int? textureId;
+  static const kChannelName = 'flutter-windows-ANGLE-OpenGL-Direct3D-Interop';
+  static const kChannel = MethodChannel(kChannelName);
+
+  int? id;
 
   @override
   void initState() {
     super.initState();
-    initPlatformState();
+    WidgetsBinding.instance.waitUntilFirstFrameRasterized.then((_) {
+      initPlatformState();
+    });
   }
 
   Future<void> initPlatformState() async {
-    const channel =
-        MethodChannel('com.alexmercerind/flutter_windows_angle_d3d_texture');
-    await channel.invokeMethod('CreateID3D11Device');
-    await channel.invokeMethod('ID3D11Device::CreateTexture2D');
-    await channel.invokeMethod('eglCreatePbufferFromClientBuffer');
-    await channel.invokeMethod('eglBindTexImage');
-    await channel.invokeMethod('glDrawArrays');
-    textureId = await channel
-        .invokeMethod('flutter::TextureRegistrar::RegisterTexture');
+    id = await kChannel.invokeMethod('id');
     setState(() {});
   }
 
@@ -39,15 +36,13 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: const Text(
-            'Flutter Windows ANGLE OpenGL+Direct3D Texture Interop',
-          ),
+          title: const Text(kChannelName),
         ),
         body: Center(
-          child: textureId == null
+          child: id == null
               ? null
               : Texture(
-                  textureId: textureId!,
+                  textureId: id!,
                   filterQuality: FilterQuality.high,
                 ),
         ),
