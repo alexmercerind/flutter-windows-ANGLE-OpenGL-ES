@@ -12,17 +12,12 @@ project(${PROJECT_NAME} LANGUAGES CXX)
 # not be changed
 set(PLUGIN_NAME "flutter_windows_angle_d3d_texture_plugin")
 
-# Any new source files that you add to the plugin should be added here.
-list(APPEND PLUGIN_SOURCES
-  "flutter_windows_angle_d3d_texture_plugin.cpp"
-  "flutter_windows_angle_d3d_texture_plugin.h"
-)
-
 # Define the plugin library target. Its name must not be changed (see comment
 # on PLUGIN_NAME above).
 add_library(${PLUGIN_NAME} SHARED
-  "include/flutter_windows_angle_d3d_texture/flutter_windows_angle_d3d_texture_plugin_c_api.h"
-  "flutter_windows_angle_d3d_texture_plugin_c_api.cpp"
+  "angle_surface_manager.cc"
+  "flutter_windows_angle_d3d_texture_plugin.cc"
+  "flutter_windows_angle_d3d_texture_plugin_c_api.cc"
   ${PLUGIN_SOURCES}
 )
 
