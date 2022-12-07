@@ -93,9 +93,8 @@ FlutterWindowsAngleD3dTexturePlugin::~FlutterWindowsAngleD3dTexturePlugin() {}
 void FlutterWindowsAngleD3dTexturePlugin::HandleMethodCall(
     const flutter::MethodCall<flutter::EncodableValue>& method_call,
     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
-  if (method_call.method_name().compare("id") == 0) {
-    auto window =
-        ::GetAncestor(registrar_->GetView()->GetNativeWindow(), GA_ROOT);
+  if (method_call.method_name().compare("render") == 0) {
+    auto window = registrar_->GetView()->GetNativeWindow();
     surface_manager_ = std::make_unique<ANGLESurfaceManager>(
         window, kTextureWidth, kTextureHeight);
     texture_ = std::make_unique<FlutterDesktopGpuSurfaceDescriptor>();
@@ -124,7 +123,6 @@ void FlutterWindowsAngleD3dTexturePlugin::HandleMethodCall(
         gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
     })";
     auto program = CompileProgram(kVertexShader, kFragmentShader);
-
     glEnableVertexAttribArray(0);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     GLfloat vertices[] = {
@@ -136,17 +134,14 @@ void FlutterWindowsAngleD3dTexturePlugin::HandleMethodCall(
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, vertices);
     glDrawArrays(GL_TRIANGLES, 0, 3);
     glDisableVertexAttribArray(0);
-
-    // TODO(@alexmercerind): Expose Direct X API for swapping buffers.
-    // |eglSwapBuffers| is not working.
-    // eglSwapBuffers(surface_manager_->display(), surface_manager_->surface());
-    glFlush();
-
+    surface_manager_->SwapBuffers();
     texture_id_ = texture_registrar_->RegisterTexture(texture_variant_.get());
     texture_registrar_->MarkTextureFrameAvailable(texture_id_);
-
     result->Success(flutter::EncodableValue(texture_id_));
-
+  } else if (method_call.method_name().compare("destroy") == 0) {
+    surface_manager_.reset();
+    texture_registrar_->UnregisterTexture(texture_id_);
+    result->Success(flutter::EncodableValue(std::monostate{}));
   } else {
     result->NotImplemented();
   }

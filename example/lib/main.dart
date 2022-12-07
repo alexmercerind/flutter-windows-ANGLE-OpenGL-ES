@@ -14,6 +14,8 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   static const kChannelName = 'flutter-windows-ANGLE-OpenGL-Direct3D-Interop';
+  static const kRenderMethodName = 'render';
+  static const kDestroyMethodName = 'destroy';
   static const kChannel = MethodChannel(kChannelName);
 
   int? id;
@@ -21,14 +23,10 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.waitUntilFirstFrameRasterized.then((_) {
-      initPlatformState();
+    WidgetsBinding.instance.waitUntilFirstFrameRasterized.then((_) async {
+      id = await kChannel.invokeMethod(kRenderMethodName);
+      setState(() {});
     });
-  }
-
-  Future<void> initPlatformState() async {
-    id = await kChannel.invokeMethod('id');
-    setState(() {});
   }
 
   @override
@@ -37,6 +35,13 @@ class _MyAppState extends State<MyApp> {
       home: Scaffold(
         appBar: AppBar(
           title: const Text(kChannelName),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () async {
+            await kChannel.invokeMethod(kDestroyMethodName);
+            setState(() {});
+          },
+          child: const Icon(Icons.close),
         ),
         body: Center(
           child: id == null
