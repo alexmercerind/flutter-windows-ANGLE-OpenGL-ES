@@ -28,6 +28,10 @@ class ANGLESurfaceManager {
   // internal D3D 11 & D3D 9 devices based on platform's capability.
   ANGLESurfaceManager(HWND window, int32_t width, int32_t height);
 
+  ~ANGLESurfaceManager();
+
+  void SwapBuffers();
+
  private:
   // Attempts to create D3D 11 (and compatibility supported) device & texture.
   // Returns success as bool.
@@ -65,9 +69,13 @@ class ANGLESurfaceManager {
   static constexpr EGLint kEGLConfigurationAttributes[] = {
       EGL_RED_SIZE,   8, EGL_GREEN_SIZE, 8, EGL_BLUE_SIZE,    8,
       EGL_ALPHA_SIZE, 8, EGL_DEPTH_SIZE, 8, EGL_STENCIL_SIZE, 8,
-      EGL_NONE};
-  static constexpr EGLint kEGLContextAttributes[] = {EGL_CONTEXT_CLIENT_VERSION,
-                                                     2, EGL_NONE};
+      EGL_NONE,
+  };
+  static constexpr EGLint kEGLContextAttributes[] = {
+      EGL_CONTEXT_CLIENT_VERSION,
+      2,
+      EGL_NONE,
+  };
   static constexpr EGLint kD3D11DisplayAttributes[] = {
       EGL_PLATFORM_ANGLE_TYPE_ANGLE,
       EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE,
@@ -87,8 +95,10 @@ class ANGLESurfaceManager {
       EGL_NONE,
   };
   static constexpr EGLint kD3D9DisplayAttributes[] = {
-      EGL_PLATFORM_ANGLE_TYPE_ANGLE, EGL_PLATFORM_ANGLE_TYPE_D3D9_ANGLE,
-      EGL_NONE};
+      EGL_PLATFORM_ANGLE_TYPE_ANGLE,
+      EGL_PLATFORM_ANGLE_TYPE_D3D9_ANGLE,
+      EGL_NONE,
+  };
   static constexpr EGLint kWrapDisplayAttributes[] = {
       EGL_PLATFORM_ANGLE_TYPE_ANGLE,
       EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE,
