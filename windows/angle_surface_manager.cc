@@ -15,15 +15,18 @@
     FAIL(message);             \
   }
 
-ANGLESurfaceManager::ANGLESurfaceManager(HWND window, int32_t width,
-                                         int32_t height)
-    : window_(window), width_(width), height_(height) {
+ANGLESurfaceManager::ANGLESurfaceManager(HWND window, IDXGIAdapter* adapter,
+                                         int32_t width, int32_t height)
+    : window_(window), adapter_(adapter), width_(width), height_(height) {
   // Presently, I believe it is a good idea to show these failure messages
   // directly to the user. It'll help fix the platform & hardware specific
   // issues.
 
   // Create D3D device & texture.
-  auto success = InitializeD3D9();
+  auto success = InitializeD3D11();
+  if (!success) {
+    success = InitializeD3D9();
+  }
   // Exit on error.
   if (!success) {
     ShowFailureMessage(L"Unable to create Windows Direct3D device.");
@@ -93,10 +96,33 @@ void ANGLESurfaceManager::SwapBuffers() {
 }
 
 bool ANGLESurfaceManager::InitializeD3D11() {
-  auto hr = ::D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL,
-                                D3D11_CREATE_DEVICE_VIDEO_SUPPORT, NULL, 0,
-                                D3D11_SDK_VERSION, &d3d_11_device_, NULL,
-                                &d3d_11_device_context_);
+  auto feature_levels = {
+      D3D_FEATURE_LEVEL_11_0,
+      D3D_FEATURE_LEVEL_10_1,
+      D3D_FEATURE_LEVEL_10_0,
+      D3D_FEATURE_LEVEL_9_3,
+  };
+  if (adapter_ == nullptr) {
+    IDXGIFactory* dxgi = nullptr;
+    CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&dxgi);
+    // Manually selecting adapter. As far as my experience goes, this is the
+    // safest approach. Passing `NULL` (so-called default) seems to cause issues
+    // on Windows 7 or maybe some older graphics drivers.
+    // First adapter is the default.
+    // |D3D_DRIVER_TYPE_UNKNOWN| must be passed with manual adapter selection.
+    dxgi->EnumAdapters(0, &adapter_);
+    dxgi->Release();
+    if (!adapter_) {
+      FAIL("No IDXGIAdapter found.");
+    }
+  }
+  auto hr = ::D3D11CreateDevice(
+      adapter_, D3D_DRIVER_TYPE_UNKNOWN, NULL, NULL, feature_levels.begin(),
+      static_cast<UINT>(feature_levels.size()), D3D11_SDK_VERSION,
+      &d3d_11_device_, NULL, &d3d_11_device_context_);
+  auto selected_level = d3d_11_device_->GetFeatureLevel();
+  std::cout << "Direct3D Feature Level: " << (((unsigned)selected_level) >> 12)
+            << "_" << ((((unsigned)selected_level) >> 8) & 0xf) << std::endl;
   CHECK_HRESULT("D3D11CreateDevice");
   auto d3d11_texture2D_desc = D3D11_TEXTURE2D_DESC{0};
   d3d11_texture2D_desc.Width = width_;
@@ -130,14 +156,20 @@ bool ANGLESurfaceManager::InitializeD3D11() {
     // D3D 9.3 (D3D11 compatibility).
     display_ =
         eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY,
-                                 kD3D9_3DisplayAttributes);
+                                 kD3D11_9_3DisplayAttributes);
     if (eglInitialize(display_, NULL, NULL) == EGL_FALSE) {
-      // Whatever.
+      // D3D 9.
       display_ =
           eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE,
-                                   EGL_DEFAULT_DISPLAY, kWrapDisplayAttributes);
+                                   EGL_DEFAULT_DISPLAY, kD3D9DisplayAttributes);
       if (eglInitialize(display_, NULL, NULL) == EGL_FALSE) {
-        FAIL("eglGetPlatformDisplayEXT");
+        // Whatever.
+        display_ = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE,
+                                            EGL_DEFAULT_DISPLAY,
+                                            kWrapDisplayAttributes);
+        if (eglInitialize(display_, NULL, NULL) == EGL_FALSE) {
+          FAIL("eglGetPlatformDisplayEXT");
+        }
       }
     }
   }

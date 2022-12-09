@@ -26,7 +26,8 @@ class ANGLESurfaceManager {
 
   // Creates a new instance of |ANGLESurfaceManager|, automatically creates
   // internal D3D 11 & D3D 9 devices based on platform's capability.
-  ANGLESurfaceManager(HWND window, int32_t width, int32_t height);
+  ANGLESurfaceManager(HWND window, IDXGIAdapter* adapter, int32_t width,
+                      int32_t height);
 
   ~ANGLESurfaceManager();
 
@@ -49,12 +50,14 @@ class ANGLESurfaceManager {
 
   // Parent window.
   HWND window_;
+  IDXGIAdapter* adapter_ = nullptr;
   int32_t width_;
   int32_t height_;
   // D3D 11 specific references.
   ID3D11Device* d3d_11_device_ = nullptr;
   ID3D11DeviceContext* d3d_11_device_context_ = nullptr;
   Microsoft::WRL::ComPtr<ID3D11Texture2D> d3d11_texture_2D_;
+  Microsoft::WRL::ComPtr<IDXGISwapChain> d3d11_swap_chain_;
   // D3D 9 specific references.
   IDirect3D9Ex* d3d_9_ex_ = nullptr;
   IDirect3DDevice9Ex* d3d_9_device_ex_ = nullptr;
@@ -83,7 +86,7 @@ class ANGLESurfaceManager {
       EGL_TRUE,
       EGL_NONE,
   };
-  static constexpr EGLint kD3D9_3DisplayAttributes[] = {
+  static constexpr EGLint kD3D11_9_3DisplayAttributes[] = {
       EGL_PLATFORM_ANGLE_TYPE_ANGLE,
       EGL_PLATFORM_ANGLE_TYPE_D3D11_ANGLE,
       EGL_PLATFORM_ANGLE_MAX_VERSION_MAJOR_ANGLE,
@@ -97,6 +100,8 @@ class ANGLESurfaceManager {
   static constexpr EGLint kD3D9DisplayAttributes[] = {
       EGL_PLATFORM_ANGLE_TYPE_ANGLE,
       EGL_PLATFORM_ANGLE_TYPE_D3D9_ANGLE,
+      EGL_PLATFORM_ANGLE_DEVICE_TYPE_ANGLE,
+      EGL_PLATFORM_ANGLE_DEVICE_TYPE_HARDWARE_ANGLE,
       EGL_NONE,
   };
   static constexpr EGLint kWrapDisplayAttributes[] = {
