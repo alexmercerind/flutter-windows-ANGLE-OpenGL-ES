@@ -15,19 +15,20 @@
     FAIL(message);             \
   }
 
-ANGLESurfaceManager::ANGLESurfaceManager(HWND window, IDXGIAdapter* adapter,
-                                         int32_t width, int32_t height)
-    : window_(window), adapter_(adapter), width_(width), height_(height) {
+ANGLESurfaceManager::ANGLESurfaceManager(HWND window, int32_t width,
+                                         int32_t height,
+                                         IDXGIAdapter* adapter = nullptr)
+    : window_(window), width_(width), height_(height), adapter_(adapter) {
   // Presently, I believe it is a good idea to show these failure messages
   // directly to the user. It'll help fix the platform & hardware specific
   // issues.
 
   // Create D3D device & texture.
   auto success = InitializeD3D11();
-  if (!success) {
-    success = InitializeD3D9();
-  }
-  // Exit on error.
+  // TODO: ANGLE's Direct X interop doesn't seem to work with anything below
+  // DirectX 11 or even WDDM 1.0 + Direct9Ex. Flutter also seems to fallback to
+  // software rendering. I have tested Windows 7 in a VirtualBox & there doesn't
+  // seem to be any hardware accelerated rendering inside Flutter window.
   if (!success) {
     ShowFailureMessage(L"Unable to create Windows Direct3D device.");
     return;
@@ -102,6 +103,11 @@ bool ANGLESurfaceManager::InitializeD3D11() {
       D3D_FEATURE_LEVEL_10_0,
       D3D_FEATURE_LEVEL_9_3,
   };
+  // NOTE: Not enabling DirectX 12.
+  // |D3D11CreateDevice| crashes directly on Windows 7.
+  // D3D_FEATURE_LEVEL_12_2, D3D_FEATURE_LEVEL_12_1, D3D_FEATURE_LEVEL_12_0,
+  // D3D_FEATURE_LEVEL_11_1, D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_1,
+  // D3D_FEATURE_LEVEL_10_0, D3D_FEATURE_LEVEL_9_3,
   if (adapter_ == nullptr) {
     IDXGIFactory* dxgi = nullptr;
     CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&dxgi);
@@ -153,23 +159,17 @@ bool ANGLESurfaceManager::InitializeD3D11() {
   display_ = eglGetPlatformDisplayEXT(
       EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY, kD3D11DisplayAttributes);
   if (eglInitialize(display_, NULL, NULL) == EGL_FALSE) {
-    // D3D 9.3 (D3D11 compatibility).
+    // D3D 11 Feature Level 9_3.
     display_ =
         eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE, EGL_DEFAULT_DISPLAY,
                                  kD3D11_9_3DisplayAttributes);
     if (eglInitialize(display_, NULL, NULL) == EGL_FALSE) {
-      // D3D 9.
+      // Whatever.
       display_ =
           eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE,
-                                   EGL_DEFAULT_DISPLAY, kD3D9DisplayAttributes);
+                                   EGL_DEFAULT_DISPLAY, kWrapDisplayAttributes);
       if (eglInitialize(display_, NULL, NULL) == EGL_FALSE) {
-        // Whatever.
-        display_ = eglGetPlatformDisplayEXT(EGL_PLATFORM_ANGLE_ANGLE,
-                                            EGL_DEFAULT_DISPLAY,
-                                            kWrapDisplayAttributes);
-        if (eglInitialize(display_, NULL, NULL) == EGL_FALSE) {
-          FAIL("eglGetPlatformDisplayEXT");
-        }
+        FAIL("eglGetPlatformDisplayEXT");
       }
     }
   }
@@ -185,7 +185,7 @@ bool ANGLESurfaceManager::InitializeD3D9() {
   present_params.BackBufferFormat = D3DFMT_UNKNOWN;
   present_params.BackBufferCount = 1;
   present_params.SwapEffect = D3DSWAPEFFECT_DISCARD;
-  present_params.hDeviceWindow = NULL;
+  present_params.hDeviceWindow = window_;
   present_params.Windowed = TRUE;
   present_params.Flags = D3DPRESENTFLAG_VIDEO;
   present_params.FullScreen_RefreshRateInHz = 0;

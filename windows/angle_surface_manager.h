@@ -26,8 +26,8 @@ class ANGLESurfaceManager {
 
   // Creates a new instance of |ANGLESurfaceManager|, automatically creates
   // internal D3D 11 & D3D 9 devices based on platform's capability.
-  ANGLESurfaceManager(HWND window, IDXGIAdapter* adapter, int32_t width,
-                      int32_t height);
+  ANGLESurfaceManager(HWND window, int32_t width, int32_t height,
+                      IDXGIAdapter* adapter = nullptr);
 
   ~ANGLESurfaceManager();
 
