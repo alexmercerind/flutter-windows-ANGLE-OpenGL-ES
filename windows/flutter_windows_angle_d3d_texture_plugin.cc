@@ -97,7 +97,7 @@ void FlutterWindowsAngleD3dTexturePlugin::HandleMethodCall(
     auto window = registrar_->GetView()->GetNativeWindow();
     auto adapter = registrar_->GetView()->GetGraphicsAdapter();
     surface_manager_ = std::make_unique<ANGLESurfaceManager>(
-        window, adapter, kTextureWidth, kTextureHeight);
+        window, kTextureWidth, kTextureHeight, adapter);
     texture_ = std::make_unique<FlutterDesktopGpuSurfaceDescriptor>();
     texture_->struct_size = sizeof(FlutterDesktopGpuSurfaceDescriptor);
     texture_->handle = surface_manager_->shared_handle();
