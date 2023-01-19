@@ -1,5 +1,5 @@
 # flutter-windows-ANGLE-OpenGL-Direct3D-Interop
-Hardware accelerated rendering on Flutter Windows Texture Widget using OpenGL APIs from ANGLE. 
+Hardware accelerated rendering on Flutter Windows Texture Widget using OpenGL ES 2.0 from ANGLE. 
 
 <p align='center'><img src='https://user-images.githubusercontent.com/28951144/177827046-35d2599e-6162-49a0-989f-048dc3b40bb5.png'></img></p>
 
@@ -34,7 +34,7 @@ flutter run --verbose
 ## Acknowlegements
 
 - [@jnschulze](https://github.com/jnschulze) for working on [Windows: Add Direct3D texture interoperability support](https://github.com/flutter/engine/pull/26840) in [flutter/engine](https://github.com/flutter/engine). 
-- [@clarkezone](https://github.com/clarkezone) for awesome ANGLE + Windows article at [A common OpenGL renderer for UWP and Win32 using Angle and Win.UI.Composition](https://clarkezone.github.io/angle/2020/02/24/angle.html). 
+- [@clarkezone](https://github.com/clarkezone) for awesome ANGLE + Windows article at [A common OpenGL renderer for UWP and Win32 using ANGLE and Win.UI.Composition](https://clarkezone.github.io/angle/2020/02/24/angle.html). 
 ## References  
 
 - [Example project showing usage of ANGLE on Windows from @clarkezone](https://github.com/clarkezone/anglehosting).
