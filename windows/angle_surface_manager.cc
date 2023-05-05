@@ -17,7 +17,7 @@
 
 ANGLESurfaceManager::ANGLESurfaceManager(HWND window, int32_t width,
                                          int32_t height,
-                                         IDXGIAdapter* adapter = nullptr)
+                                         IDXGIAdapter* adapter)
     : window_(window), width_(width), height_(height), adapter_(adapter) {
   // Presently, I believe it is a good idea to show these failure messages
   // directly to the user. It'll help fix the platform & hardware specific
