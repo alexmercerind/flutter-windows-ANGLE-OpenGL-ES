@@ -13,18 +13,14 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  static const kChannelName = 'flutter-windows-ANGLE-OpenGL-Direct3D-Interop';
-  static const kRenderMethodName = 'render';
-  static const kDestroyMethodName = 'destroy';
-  static const kChannel = MethodChannel(kChannelName);
-
-  int? id;
+  int? textureId;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.waitUntilFirstFrameRasterized.then((_) async {
-      id = await kChannel.invokeMethod(kRenderMethodName);
+      const channel = MethodChannel('flutter-windows-ANGLE-OpenGL-ES');
+      textureId = await channel.invokeMethod('render');
       setState(() {});
     });
   }
@@ -34,20 +30,13 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: const Text(kChannelName),
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () async {
-            await kChannel.invokeMethod(kDestroyMethodName);
-            setState(() {});
-          },
-          child: const Icon(Icons.close),
+          title: const Text('flutter-windows-ANGLE-OpenGL-ES'),
         ),
         body: Center(
-          child: id == null
+          child: textureId == null
               ? null
               : Texture(
-                  textureId: id!,
+                  textureId: textureId!,
                   filterQuality: FilterQuality.high,
                 ),
         ),

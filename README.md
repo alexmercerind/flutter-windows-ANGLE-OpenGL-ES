@@ -1,5 +1,6 @@
-# flutter-windows-ANGLE-OpenGL-Direct3D-Interop
-Hardware accelerated rendering on Flutter Windows Texture Widget using OpenGL ES 2.0 from ANGLE. 
+# flutter-windows-ANGLE-OpenGL-ES'
+
+Hardware accelerated rendering on Flutter Windows `Texture` Widget using OpenGL ES 2.0 from ANGLE.
 
 <p align='center'><img src='https://user-images.githubusercontent.com/28951144/177827046-35d2599e-6162-49a0-989f-048dc3b40bb5.png'></img></p>
 
@@ -33,14 +34,11 @@ flutter run --verbose
 
 ## Acknowlegements
 
-- [@jnschulze](https://github.com/jnschulze) for working on [Windows: Add Direct3D texture interoperability support](https://github.com/flutter/engine/pull/26840) in [flutter/engine](https://github.com/flutter/engine). 
-- [@clarkezone](https://github.com/clarkezone) for awesome ANGLE + Windows article at [A common OpenGL renderer for UWP and Win32 using ANGLE and Win.UI.Composition](https://clarkezone.github.io/angle/2020/02/24/angle.html). 
-## References  
+- [@jnschulze](https://github.com/jnschulze) for working on [Windows: Add Direct3D texture interoperability support](https://github.com/flutter/engine/pull/26840) in [flutter/engine](https://github.com/flutter/engine).
+- [@clarkezone](https://github.com/clarkezone) for awesome ANGLE + Windows article at [A common OpenGL renderer for UWP and Win32 using ANGLE and Win.UI.Composition](https://clarkezone.github.io/angle/2020/02/24/angle.html).
+
+## References
 
 - [Example project showing usage of ANGLE on Windows from @clarkezone](https://github.com/clarkezone/anglehosting).
 - [Interop-with-other-DirectX-code section in Microsoft's ANGLE repository](https://github.com/Microsoft/angle/wiki/Interop-with-other-DirectX-code).
 - [HelloTriangle.cpp from ANGLE repository](https://github.com/google/angle/blob/main/samples/hello_triangle/HelloTriangle.cpp).
-
-## License 
-
-The source code in this repository is under [The Unlicense](https://unlicense.org/) license.

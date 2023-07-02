@@ -3,7 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  flutter_windows_angle_d3d_texture
+  flutter_windows_angle_opengl_es
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

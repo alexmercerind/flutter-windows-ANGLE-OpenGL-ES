@@ -5,19 +5,19 @@
 cmake_minimum_required(VERSION 3.14)
 
 # Project-level configuration.
-set(PROJECT_NAME "flutter_windows_angle_d3d_texture")
+set(PROJECT_NAME "flutter_windows_angle_opengl_es")
 project(${PROJECT_NAME} LANGUAGES CXX)
 
 # This value is used when generating builds using this plugin, so it must
 # not be changed
-set(PLUGIN_NAME "flutter_windows_angle_d3d_texture_plugin")
+set(PLUGIN_NAME "flutter_windows_angle_opengl_es_plugin")
 
 # Define the plugin library target. Its name must not be changed (see comment
 # on PLUGIN_NAME above).
 add_library(${PLUGIN_NAME} SHARED
   "angle_surface_manager.cc"
-  "flutter_windows_angle_d3d_texture_plugin.cc"
-  "flutter_windows_angle_d3d_texture_plugin_c_api.cc"
+  "flutter_windows_angle_opengl_es_plugin.cc"
+  "flutter_windows_angle_opengl_es_plugin_c_api.cc"
   ${PLUGIN_SOURCES}
 )
 
@@ -49,7 +49,7 @@ target_link_libraries(${PLUGIN_NAME} PRIVATE
 # List of absolute paths to libraries that should be bundled with the plugin.
 # This list could contain prebuilt libraries, or libraries created by an
 # external build triggered from this build file.
-set(flutter_windows_angle_d3d_texture_bundled_libraries
+set(flutter_windows_angle_opengl_es_bundled_libraries
   "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-console-l1-1-0.dll"
   "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-console-l1-2-0.dll"
   "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-datetime-l1-1-0.dll"
