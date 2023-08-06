@@ -6,7 +6,7 @@ OpenGL ES 2.0 hardware accelerated rendering on Flutter Windows `Texture` Widget
 
 ## Introduction
 
-[ANGLE (Almost Native Graphics Layer Engine)](https://github.com/google/angle) is used, which translates these OpenGL calls to DirectX 11 (which Flutter Windows now supports) calls internall.
+[ANGLE (Almost Native Graphics Layer Engine)](https://github.com/google/angle) is used, which translates these OpenGL calls to DirectX 11 (which Flutter Windows now supports) calls internally.
 
 The example uses the [new Direct3D texture interop capability for Flutter Windows](https://github.com/flutter/engine/pull/26840) added by [@jnschulze](https://github.com/jnschulze). I compiled ANGLE for Windows on my machine & [.DLLs / .LIBs are present in this repository](https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-Direct3D-Interop/tree/master/windows/bin), which are used by the application. The code in this repository is very straightforward & procedurally written without any boilerplate. I hope this serves as a great example.
 
