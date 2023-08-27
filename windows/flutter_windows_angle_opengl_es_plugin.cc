@@ -84,6 +84,7 @@ void FlutterWindowsANGLEOpenGLESPlugin::HandleMethodCall(
             [&](auto, auto) { return texture_.get(); }));
     // ---------------------------------------------
     surface_manager_->Draw([&]() {
+      std::cout << glGetString(GL_VERSION) << std::endl;
       constexpr char kVertexShader[] = R"(attribute vec4 vPosition;
     void main()
     {

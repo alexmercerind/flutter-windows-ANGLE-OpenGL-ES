@@ -1,14 +1,14 @@
 # flutter-windows-ANGLE-OpenGL-ES
 
-OpenGL ES 2.0 hardware accelerated rendering on Flutter Windows `Texture` Widget using ANGLE.
+OpenGL ES hardware accelerated rendering on Flutter Windows `Texture` Widget using ANGLE.
 
 ![](https://user-images.githubusercontent.com/28951144/177827046-35d2599e-6162-49a0-989f-048dc3b40bb5.png)
 
 ## Introduction
 
-[ANGLE (Almost Native Graphics Layer Engine)](https://github.com/google/angle) is used, which translates these OpenGL calls to DirectX 11 (which Flutter Windows now supports) calls internally.
+[ANGLE (Almost Native Graphics Layer Engine)](https://github.com/google/angle) is used in this example, which translates these OpenGL ES calls to DirectX 11 (which Flutter Windows now supports) calls internally. The example uses the [new Direct3D texture interop capability for Flutter Windows](https://github.com/flutter/engine/pull/26840) added by [@jnschulze](https://github.com/jnschulze).
 
-The example uses the [new Direct3D texture interop capability for Flutter Windows](https://github.com/flutter/engine/pull/26840) added by [@jnschulze](https://github.com/jnschulze). I compiled ANGLE for Windows on my machine & [.DLLs / .LIBs are present in this repository](https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-Direct3D-Interop/tree/master/windows/bin), which are used by the application. The code in this repository is very straightforward & procedurally written without any boilerplate. I hope this serves as a great example.
+I compiled ANGLE for Windows on my machine & [.DLLs / .LIBs are present in this repository](https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-Direct3D-Interop/tree/master/windows/bin), which are used by the application. The code in this repository is very straightforward & procedurally written without any boilerplate. I hope this serves as a great example.
 
 ## Notes
 
@@ -21,7 +21,7 @@ Engine • revision 56faff459e
 Tools • Dart 2.18.0 (build 2.18.0-261.0.dev) • DevTools 2.15.0
 ```
 
-**For Running:**
+## Run
 
 ```bash
 git clone https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-ES.git
