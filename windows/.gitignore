@@ -15,3 +15,9 @@ x86/
 *.[Cc]ache
 # but keep track of directories ending in .cache
 !*.[Cc]ache/
+
+# The checked-in ANGLE runtime uses architecture directories intentionally.
+!bin/x64/
+!bin/x64/**
+!bin/arm64/
+!bin/arm64/**

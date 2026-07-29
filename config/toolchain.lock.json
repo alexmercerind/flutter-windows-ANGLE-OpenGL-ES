@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-07-29",
+  "host_tools": {
+    "python": {
+      "version": "3.14.6",
+      "source": "https://www.python.org/downloads/release/python-3146/"
+    }
+  },
+  "depot_tools": {
+    "repository": "https://chromium.googlesource.com/chromium/tools/depot_tools.git",
+    "commit": "c0148d63d4909b3f27c9df5b6273efc496bc4459"
+  },
+  "angle_managed_tools": {
+    "policy": "GN, Ninja, and Clang are supplied by the pinned ANGLE checkout and must not be upgraded independently.",
+    "observed_for_angle_commit": {
+      "gn": "2470 (10d3ab4387f7)",
+      "ninja": "1.12.1",
+      "clang": "23.0.0git (llvm-project 53d18800eda3b7407e53366f27ca78e922c6e0db)"
+    }
+  },
+  "runner_managed_tools": {
+    "policy": "Visual Studio, MSVC, Git, CMake, and GitHub runner versions are selected by the required GitHub runner image and recorded from every real build."
+  },
+  "runner_labels": {
+    "build": "windows-2025",
+    "arm64_smoke": "windows-11-arm"
+  }
+}

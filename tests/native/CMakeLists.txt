@@ -1,0 +1,21 @@
+cmake_minimum_required(VERSION 3.14)
+project(angle_native_smoke_test LANGUAGES CXX)
+
+if(NOT DEFINED ANGLE_ROOT)
+  message(FATAL_ERROR "ANGLE_ROOT must point to a collected staging directory")
+endif()
+
+foreach(required_dir EGL GLES2 GLES3 KHR)
+  if(NOT IS_DIRECTORY "${ANGLE_ROOT}/include/${required_dir}")
+    message(FATAL_ERROR "Missing staged header directory: ${ANGLE_ROOT}/include/${required_dir}")
+  endif()
+endforeach()
+
+add_executable(angle_smoke_test angle_smoke_test.cpp)
+target_compile_features(angle_smoke_test PRIVATE cxx_std_17)
+target_include_directories(angle_smoke_test PRIVATE "${ANGLE_ROOT}/include")
+target_compile_definitions(angle_smoke_test PRIVATE UNICODE _UNICODE)
+target_link_libraries(angle_smoke_test PRIVATE d3d11 dxgi)
+if(MSVC)
+  target_compile_options(angle_smoke_test PRIVATE /W4 /WX /EHsc)
+endif()

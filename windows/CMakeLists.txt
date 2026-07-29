@@ -8,16 +8,27 @@ cmake_minimum_required(VERSION 3.14)
 set(PROJECT_NAME "flutter_windows_angle_opengl_es")
 project(${PROJECT_NAME} LANGUAGES CXX)
 
+# Explicitly opt in to modern CMake behaviors to avoid warnings with recent
+# versions of CMake.
+cmake_policy(VERSION 3.14...3.25)
+
 # This value is used when generating builds using this plugin, so it must
 # not be changed
 set(PLUGIN_NAME "flutter_windows_angle_opengl_es_plugin")
 
+# Any new source files that you add to the plugin should be added here.
+list(APPEND PLUGIN_SOURCES
+  "angle_surface_manager.cpp"
+  "angle_surface_manager.h"
+  "flutter_windows_angle_opengl_es_plugin.cpp"
+  "flutter_windows_angle_opengl_es_plugin.h"
+)
+
 # Define the plugin library target. Its name must not be changed (see comment
 # on PLUGIN_NAME above).
 add_library(${PLUGIN_NAME} SHARED
-  "angle_surface_manager.cc"
-  "flutter_windows_angle_opengl_es_plugin.cc"
-  "flutter_windows_angle_opengl_es_plugin_c_api.cc"
+  "include/flutter_windows_angle_opengl_es/flutter_windows_angle_opengl_es_plugin_c_api.h"
+  "flutter_windows_angle_opengl_es_plugin_c_api.cpp"
   ${PLUGIN_SOURCES}
 )
 
@@ -33,81 +44,103 @@ set_target_properties(${PLUGIN_NAME} PROPERTIES
   CXX_VISIBILITY_PRESET hidden)
 target_compile_definitions(${PLUGIN_NAME} PRIVATE FLUTTER_PLUGIN_IMPL)
 
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include/external")
+if(DEFINED FLUTTER_TARGET_PLATFORM)
+  if("${FLUTTER_TARGET_PLATFORM}" STREQUAL "windows-x64")
+    set(ANGLE_ARCH "x64")
+  elseif("${FLUTTER_TARGET_PLATFORM}" STREQUAL "windows-arm64")
+    set(ANGLE_ARCH "arm64")
+  else()
+    message(FATAL_ERROR
+      "Unsupported FLUTTER_TARGET_PLATFORM: ${FLUTTER_TARGET_PLATFORM}")
+  endif()
+elseif(DEFINED CMAKE_GENERATOR_PLATFORM AND
+       NOT "${CMAKE_GENERATOR_PLATFORM}" STREQUAL "")
+  string(TOUPPER "${CMAKE_GENERATOR_PLATFORM}" ANGLE_GENERATOR_PLATFORM)
+  if("${ANGLE_GENERATOR_PLATFORM}" STREQUAL "X64")
+    set(ANGLE_ARCH "x64")
+  elseif("${ANGLE_GENERATOR_PLATFORM}" STREQUAL "ARM64")
+    set(ANGLE_ARCH "arm64")
+  else()
+    message(FATAL_ERROR
+      "Unsupported CMAKE_GENERATOR_PLATFORM: ${CMAKE_GENERATOR_PLATFORM}")
+  endif()
+else()
+  message(FATAL_ERROR
+    "Unable to determine the Windows target architecture. "
+    "FLUTTER_TARGET_PLATFORM or CMAKE_GENERATOR_PLATFORM is required.")
+endif()
+
+set(ANGLE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/external")
+set(ANGLE_BIN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bin/${ANGLE_ARCH}")
+set(ANGLE_DLL_DIR "${ANGLE_BIN_DIR}/dll")
+set(ANGLE_LIB_DIR "${ANGLE_BIN_DIR}/lib")
+
+foreach(ANGLE_REQUIRED_DIRECTORY
+    "${ANGLE_INCLUDE_DIR}/EGL"
+    "${ANGLE_INCLUDE_DIR}/GLES2"
+    "${ANGLE_INCLUDE_DIR}/GLES3"
+    "${ANGLE_INCLUDE_DIR}/KHR"
+    "${ANGLE_DLL_DIR}"
+    "${ANGLE_LIB_DIR}")
+  if(NOT IS_DIRECTORY "${ANGLE_REQUIRED_DIRECTORY}")
+    message(FATAL_ERROR
+      "Missing ANGLE directory for ${ANGLE_ARCH}: ${ANGLE_REQUIRED_DIRECTORY}")
+  endif()
+endforeach()
+
+set(ANGLE_EGL_IMPORT_LIBRARY "${ANGLE_LIB_DIR}/libEGL.dll.lib")
+set(ANGLE_GLES_IMPORT_LIBRARY "${ANGLE_LIB_DIR}/libGLESv2.dll.lib")
+foreach(ANGLE_REQUIRED_LIBRARY
+    "${ANGLE_EGL_IMPORT_LIBRARY}"
+    "${ANGLE_GLES_IMPORT_LIBRARY}")
+  if(NOT EXISTS "${ANGLE_REQUIRED_LIBRARY}")
+    message(FATAL_ERROR
+      "Missing ANGLE import library for ${ANGLE_ARCH}: ${ANGLE_REQUIRED_LIBRARY}")
+  endif()
+endforeach()
+
+target_include_directories(${PLUGIN_NAME} PRIVATE "${ANGLE_INCLUDE_DIR}")
 
 # Source include directories and library dependencies. Add any plugin-specific
 # dependencies here.
 target_include_directories(${PLUGIN_NAME} INTERFACE
   "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_link_libraries(${PLUGIN_NAME} PRIVATE
+  d3d11.lib
+  dxgi.lib
   flutter
   flutter_wrapper_plugin
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/lib/libEGL.dll.lib"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/lib/libGLESv2.dll.lib"
+  "${ANGLE_EGL_IMPORT_LIBRARY}"
+  "${ANGLE_GLES_IMPORT_LIBRARY}"
 )
 
 # List of absolute paths to libraries that should be bundled with the plugin.
-# This list could contain prebuilt libraries, or libraries created by an
-# external build triggered from this build file.
+# These files are collected from the same verified staging directory used to
+# create the release ZIP. No architecture fallback is permitted.
 set(flutter_windows_angle_opengl_es_bundled_libraries
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-console-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-console-l1-2-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-datetime-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-debug-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-errorhandling-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-fibers-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-file-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-file-l1-2-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-file-l2-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-handle-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-heap-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-interlocked-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-libraryloader-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-localization-l1-2-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-memory-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-namedpipe-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-processenvironment-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-processthreads-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-processthreads-l1-1-1.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-profile-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-rtlsupport-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-string-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-synch-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-synch-l1-2-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-sysinfo-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-timezone-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-util-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-conio-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-convert-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-environment-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-filesystem-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-heap-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-locale-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-math-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-multibyte-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-private-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-process-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-runtime-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-stdio-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-string-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-time-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-utility-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-downlevel-kernel32-l2-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-eventing-provider-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/d3dcompiler_47.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/libc++.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/libEGL.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/libGLESv2.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/ucrtbase.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/ucrtbased.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/vccorlib140.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/vccorlib140d.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/vcruntime140.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/vcruntime140d.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/vcruntime140_1.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/vcruntime140_1d.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/vk_swiftshader.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/vulkan-1.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/zlib.dll"
-  PARENT_SCOPE
+  "${ANGLE_DLL_DIR}/d3dcompiler_47.dll"
+  "${ANGLE_DLL_DIR}/libEGL.dll"
+  "${ANGLE_DLL_DIR}/libGLESv2.dll"
+  "${ANGLE_DLL_DIR}/vk_swiftshader.dll"
+  "${ANGLE_DLL_DIR}/vk_swiftshader_icd.json"
+  "${ANGLE_DLL_DIR}/vulkan-1.dll"
 )
+
+foreach(ANGLE_RUNTIME_FILE IN LISTS
+    flutter_windows_angle_opengl_es_bundled_libraries)
+  if(NOT EXISTS "${ANGLE_RUNTIME_FILE}")
+    message(FATAL_ERROR
+      "Missing required ANGLE runtime file for ${ANGLE_ARCH}: ${ANGLE_RUNTIME_FILE}")
+  endif()
+endforeach()
+
+foreach(ANGLE_OPTIONAL_RUNTIME libc++.dll zlib.dll)
+  if(EXISTS "${ANGLE_DLL_DIR}/${ANGLE_OPTIONAL_RUNTIME}")
+    list(APPEND flutter_windows_angle_opengl_es_bundled_libraries
+      "${ANGLE_DLL_DIR}/${ANGLE_OPTIONAL_RUNTIME}")
+  endif()
+endforeach()
+
+set(flutter_windows_angle_opengl_es_bundled_libraries
+  "${flutter_windows_angle_opengl_es_bundled_libraries}"
+  PARENT_SCOPE)

@@ -9,11 +9,13 @@
 #include <flutter/plugin_registrar_windows.h>
 #include <flutter/texture_registrar.h>
 
+#include <memory>
+
 #include "angle_surface_manager.h"
 
 namespace flutter_windows_angle_opengl_es {
 
-class FlutterWindowsANGLEOpenGLESPlugin : public flutter::Plugin {
+class FlutterWindowsAngleOpenglEsPlugin : public flutter::Plugin {
  public:
   flutter::MethodChannel<flutter::EncodableValue>* channel() const {
     return channel_.get();
@@ -25,17 +27,17 @@ class FlutterWindowsANGLEOpenGLESPlugin : public flutter::Plugin {
 
   static void RegisterWithRegistrar(flutter::PluginRegistrarWindows* registrar);
 
-  FlutterWindowsANGLEOpenGLESPlugin(
+  FlutterWindowsAngleOpenglEsPlugin(
       flutter::PluginRegistrarWindows* registrar,
       std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> channel,
       flutter::TextureRegistrar* texture_registrar);
 
-  virtual ~FlutterWindowsANGLEOpenGLESPlugin();
+  virtual ~FlutterWindowsAngleOpenglEsPlugin();
 
-  FlutterWindowsANGLEOpenGLESPlugin(const FlutterWindowsANGLEOpenGLESPlugin&) =
+  FlutterWindowsAngleOpenglEsPlugin(const FlutterWindowsAngleOpenglEsPlugin&) =
       delete;
-  FlutterWindowsANGLEOpenGLESPlugin& operator=(
-      const FlutterWindowsANGLEOpenGLESPlugin&) = delete;
+  FlutterWindowsAngleOpenglEsPlugin& operator=(
+      const FlutterWindowsAngleOpenglEsPlugin&) = delete;
 
  private:
   void HandleMethodCall(
@@ -54,4 +56,4 @@ class FlutterWindowsANGLEOpenGLESPlugin : public flutter::Plugin {
 
 }  // namespace flutter_windows_angle_opengl_es
 
-#endif
+#endif  // FLUTTER_PLUGIN_FLUTTER_WINDOWS_ANGLE_OPENGL_ES_PLUGIN_H_

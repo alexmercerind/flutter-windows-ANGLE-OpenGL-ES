@@ -89,11 +89,11 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.alexmercerind" "\0"
+            VALUE "CompanyName", "com.example" "\0"
             VALUE "FileDescription", "flutter_windows_angle_opengl_es_example" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "flutter_windows_angle_opengl_es_example" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2022 com.alexmercerind. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
             VALUE "OriginalFilename", "flutter_windows_angle_opengl_es_example.exe" "\0"
             VALUE "ProductName", "flutter_windows_angle_opengl_es_example" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
