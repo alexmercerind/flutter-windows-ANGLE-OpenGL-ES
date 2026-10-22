@@ -13,7 +13,7 @@
 
 namespace flutter_windows_angle_opengl_es {
 
-class FlutterWindowsANGLEOpenGLESPlugin : public flutter::Plugin {
+class FlutterWindowsAngleOpenglEsPlugin : public flutter::Plugin {
  public:
   flutter::MethodChannel<flutter::EncodableValue>* channel() const {
     return channel_.get();
@@ -25,27 +25,25 @@ class FlutterWindowsANGLEOpenGLESPlugin : public flutter::Plugin {
 
   static void RegisterWithRegistrar(flutter::PluginRegistrarWindows* registrar);
 
-  FlutterWindowsANGLEOpenGLESPlugin(
+  FlutterWindowsAngleOpenglEsPlugin(
       flutter::PluginRegistrarWindows* registrar,
       std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>> channel,
       flutter::TextureRegistrar* texture_registrar);
 
-  virtual ~FlutterWindowsANGLEOpenGLESPlugin();
+  virtual ~FlutterWindowsAngleOpenglEsPlugin();
 
-  FlutterWindowsANGLEOpenGLESPlugin(const FlutterWindowsANGLEOpenGLESPlugin&) =
+  FlutterWindowsAngleOpenglEsPlugin(const FlutterWindowsAngleOpenglEsPlugin&) =
       delete;
-  FlutterWindowsANGLEOpenGLESPlugin& operator=(
-      const FlutterWindowsANGLEOpenGLESPlugin&) = delete;
+  FlutterWindowsAngleOpenglEsPlugin& operator=(
+      const FlutterWindowsAngleOpenglEsPlugin&) = delete;
 
  private:
   void HandleMethodCall(
       const flutter::MethodCall<flutter::EncodableValue>& method_call,
       std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result);
 
-  std::unique_ptr<ANGLESurfaceManager> surface_manager_;
-
-  std::unique_ptr<FlutterDesktopGpuSurfaceDescriptor> texture_;
-  std::unique_ptr<flutter::TextureVariant> texture_variant_;
+  struct RenderedTexture;
+  std::shared_ptr<RenderedTexture> rendered_texture_;
 
   flutter::PluginRegistrarWindows* registrar_;
   flutter::TextureRegistrar* texture_registrar_;

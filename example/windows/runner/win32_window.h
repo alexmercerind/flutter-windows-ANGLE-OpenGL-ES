@@ -34,9 +34,8 @@ class Win32Window {
   // consistent size to will treat the width height passed in to this function
   // as logical pixels and scale to appropriate for the default monitor. Returns
   // true if the window was created successfully.
-  bool CreateAndShow(const std::wstring& title,
-                     const Point& origin,
-                     const Size& size);
+  bool Create(const std::wstring& title, const Point& origin, const Size& size);
+  bool Show();
 
   // Release OS resources associated with window.
   void Destroy();
@@ -63,7 +62,7 @@ class Win32Window {
                                  WPARAM const wparam,
                                  LPARAM const lparam) noexcept;
 
-  // Called when CreateAndShow is called, allowing subclass window-related
+  // Called when Create is called, allowing subclass window-related
   // setup. Subclasses should return false if setup fails.
   virtual bool OnCreate();
 

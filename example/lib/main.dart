@@ -6,7 +6,7 @@ void main() {
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -20,8 +20,10 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     WidgetsBinding.instance.waitUntilFirstFrameRasterized.then((_) async {
       const channel = MethodChannel('flutter-windows-ANGLE-OpenGL-ES');
-      textureId = await channel.invokeMethod('render');
-      setState(() {});
+      if (!mounted) return;
+      final id = await channel.invokeMethod<int>('render');
+      if (!mounted) return;
+      setState(() => textureId = id);
     });
   }
 
@@ -29,9 +31,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(
-          title: const Text('flutter-windows-ANGLE-OpenGL-ES'),
-        ),
+        appBar: AppBar(title: const Text('flutter-windows-ANGLE-OpenGL-ES')),
         body: Center(
           child: textureId == null
               ? null

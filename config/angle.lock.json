@@ -1,0 +1,33 @@
+{
+  "release_version": "8078",
+  "angle": {
+    "repository": "https://github.com/google/angle.git",
+    "branch": "chromium/8078",
+    "commit": "9fe55a5adc2a9a9d6ab60af70f69ee847a6418a1"
+  },
+  "depot_tools": {
+    "repository": "https://chromium.googlesource.com/chromium/tools/depot_tools.git",
+    "commit": "c0148d63d4909b3f27c9df5b6273efc496bc4459"
+  },
+  "windows_sdk_line": "10.0.28000",
+  "architectures": [
+    "x64",
+    "arm64"
+  ],
+  "gn_args": {
+    "is_debug": false,
+    "is_component_build": false,
+    "is_clang": true,
+    "target_os": "win",
+    "symbol_level": 0,
+    "angle_enable_d3d11": true,
+    "angle_enable_gl": true,
+    "angle_enable_gl_desktop_backend": true,
+    "angle_enable_vulkan": true,
+    "angle_enable_swiftshader": true,
+    "angle_build_tests": false,
+    "angle_enable_wgpu": false,
+    "angle_enable_null": false,
+    "angle_enable_vulkan_validation_layers": false
+  }
+}

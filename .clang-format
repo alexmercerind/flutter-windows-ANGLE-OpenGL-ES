@@ -1,3 +1,2 @@
-BasedOnStyle: Google
-DerivePointerAlignment: false
-PointerAlignment: Left
+BasedOnStyle: Chromium
+Standard: Latest

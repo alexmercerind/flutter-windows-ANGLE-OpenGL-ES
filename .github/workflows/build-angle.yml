@@ -1,0 +1,205 @@
+name: Build ANGLE for Windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    tags: ["v*"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-2025-vs2026
+    strategy:
+      fail-fast: false
+      matrix:
+        architecture: [x64, arm64]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Enable long Git paths for ANGLE dependencies
+        shell: pwsh
+        run: |
+          git config --global core.longpaths true
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Install Windows SDK 10.0.28000.x
+        shell: pwsh
+        run: |
+          $sdk = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\10\Include\10.0.28000.0'
+          if (-not (Test-Path $sdk)) {
+            $setup = Join-Path $env:RUNNER_TEMP 'winsdksetup.exe'
+            Invoke-WebRequest 'https://go.microsoft.com/fwlink/?linkid=2376217' -OutFile $setup
+            $installer = Start-Process -FilePath $setup -ArgumentList '/features OptionId.DesktopCPPx64 OptionId.DesktopCPPARM64 /quiet /norestart' -Wait -PassThru -WindowStyle Hidden
+            if ($installer.ExitCode -ne 0) { throw "Windows SDK installer failed: $($installer.ExitCode)" }
+          }
+          if (-not (Test-Path $sdk)) { throw 'Windows SDK 10.0.28000.x was not installed' }
+      - name: Build pinned ANGLE and stage runtime
+        shell: pwsh
+        run: |
+          python scripts/windows/angle.py setup
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python scripts/windows/angle.py build ${{ matrix.architecture }}
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Install x64 runtime for example
+        if: matrix.architecture == 'x64'
+        run: python scripts/windows/angle.py install x64
+      - uses: subosito/flutter-action@v2
+        if: matrix.architecture == 'x64'
+        with:
+          channel: stable
+          flutter-version: 3.47.x
+      - name: Show and validate Flutter and bundled Dart
+        if: matrix.architecture == 'x64'
+        shell: pwsh
+        run: |
+          $flutter = flutter --version | Out-String
+          $dart = dart --version 2>&1 | Out-String
+          Write-Host "requested Flutter: 3.47.x"
+          Write-Host "resolved Flutter: $flutter"
+          Write-Host "resolved Dart: $dart"
+          if ($flutter -notmatch 'Flutter 3\.47\.\d+' -or $dart -notmatch 'Dart SDK version: 3\.13\.\d+') {
+            throw 'Expected Flutter 3.47.x with bundled Dart 3.13.x'
+          }
+      - name: Analyze and build x64 example
+        if: matrix.architecture == 'x64'
+        working-directory: example
+        shell: pwsh
+        run: |
+          flutter pub get
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          flutter analyze
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          flutter build windows --release
+      - name: Package x64
+        if: matrix.architecture == 'x64'
+        run: python scripts/windows/angle.py package x64
+      - uses: actions/upload-artifact@v7
+        if: matrix.architecture == 'x64'
+        with:
+          name: angle-windows-x64
+          path: dist/*-windows-x64.7z
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        with:
+          name: angle-${{ matrix.architecture }}-staging
+          path: .angle-work/staging/${{ matrix.architecture }}/**
+          if-no-files-found: error
+
+  arm64:
+    needs: build
+    runs-on: windows-11-arm
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Windows SDK 10.0.28000.x
+        shell: pwsh
+        run: |
+          $sdk = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\10\Include\10.0.28000.0'
+          if (-not (Test-Path $sdk)) {
+            $setup = Join-Path $env:RUNNER_TEMP 'winsdksetup.exe'
+            Invoke-WebRequest 'https://go.microsoft.com/fwlink/?linkid=2376217' -OutFile $setup
+            $installer = Start-Process -FilePath $setup -ArgumentList '/features OptionId.DesktopCPPx64 OptionId.DesktopCPPARM64 /quiet /norestart' -Wait -PassThru -WindowStyle Hidden
+            if ($installer.ExitCode -ne 0) { throw "Windows SDK installer failed: $($installer.ExitCode)" }
+          }
+          if (-not (Test-Path $sdk)) { throw 'Windows SDK 10.0.28000.x was not installed' }
+      - uses: actions/download-artifact@v8
+        with:
+          name: angle-arm64-staging
+          path: .angle-work/staging/arm64
+      - name: Install ARM64 runtime for example
+        run: python scripts/windows/angle.py install arm64
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.x
+          architecture: x64
+      - name: Install native ARM64 Dart SDK
+        shell: pwsh
+        run: |
+          $flutterRoot = $env:FLUTTER_ROOT
+          if (-not $flutterRoot) { throw 'Flutter SDK root is missing' }
+          Remove-Item -LiteralPath (Join-Path $flutterRoot 'bin\cache\engine-dart-sdk.stamp') -Force -ErrorAction SilentlyContinue
+          & (Join-Path $flutterRoot 'bin\internal\update_dart_sdk.ps1')
+          if ($LASTEXITCODE -ne 0) { throw 'Native ARM64 Dart bootstrap failed' }
+          $dart = & (Join-Path $flutterRoot 'bin\dart.bat') --version 2>&1 | Out-String
+          if ($LASTEXITCODE -ne 0 -or $dart -notmatch 'windows_arm64') {
+            throw "Expected native ARM64 Dart, got: $dart"
+          }
+          Write-Host $dart
+      - name: Show and validate Flutter and bundled Dart
+        shell: pwsh
+        run: |
+          $flutter = flutter --version | Out-String
+          $dart = dart --version 2>&1 | Out-String
+          Write-Host "requested Flutter: 3.47.x"
+          Write-Host "resolved Flutter: $flutter"
+          Write-Host "resolved Dart: $dart"
+          if ($flutter -notmatch 'Flutter 3\.47\.\d+' -or $dart -notmatch 'Dart SDK version: 3\.13\.\d+' -or $dart -notmatch 'windows_arm64') {
+            throw 'Expected Flutter 3.47.x with bundled native ARM64 Dart 3.13.x'
+          }
+          flutter precache --windows
+          if ($LASTEXITCODE -ne 0) { throw 'Windows ARM64 engine precache failed' }
+      - name: Analyze and build ARM64 example
+        working-directory: example
+        shell: pwsh
+        run: |
+          flutter pub get
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          flutter analyze
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          flutter build windows --release
+      - name: Package ARM64
+        run: python scripts/windows/angle.py package arm64
+      - uses: actions/upload-artifact@v7
+        with:
+          name: angle-windows-arm64
+          path: dist/*-windows-arm64.7z
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build, arm64]
+    runs-on: windows-2025-vs2026
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: angle-windows-x64
+          path: dist
+      - uses: actions/download-artifact@v8
+        with:
+          name: angle-windows-arm64
+          path: dist
+      - name: Create and verify SHA256SUMS
+        shell: pwsh
+        run: |
+          python scripts/windows/angle.py checksums
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-Content dist/SHA256SUMS | ForEach-Object {
+            $hash, $name = $_ -split '  ', 2
+            if ((Get-FileHash "dist/$name" -Algorithm SHA256).Hash -ne $hash) { throw "SHA256 mismatch: $name" }
+          }
+      - uses: actions/upload-artifact@v7
+        with:
+          name: angle-release-files
+          path: dist/*
+          if-no-files-found: error
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = (Get-Content config/angle.lock.json -Raw | ConvertFrom-Json).release_version
+          if ($env:GITHUB_REF_NAME -ne "v$version") { throw "Expected release version $version" }
+          $archives = @(Get-ChildItem dist -Filter '*.7z' | ForEach-Object { $_.FullName })
+          gh release view $env:GITHUB_REF_NAME --repo $env:GITHUB_REPOSITORY --json id | Out-Null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $env:GITHUB_REF_NAME @archives dist/SHA256SUMS --repo $env:GITHUB_REPOSITORY --clobber
+          } else {
+            gh release create $env:GITHUB_REF_NAME @archives dist/SHA256SUMS --repo $env:GITHUB_REPOSITORY --verify-tag --title $env:GITHUB_REF_NAME
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

@@ -3,6 +3,7 @@
 # version, as doing so will cause the plugin to fail to compile for some
 # customers of the plugin.
 cmake_minimum_required(VERSION 3.14)
+cmake_policy(VERSION 3.14...3.25)
 
 # Project-level configuration.
 set(PROJECT_NAME "flutter_windows_angle_opengl_es")
@@ -12,12 +13,18 @@ project(${PROJECT_NAME} LANGUAGES CXX)
 # not be changed
 set(PLUGIN_NAME "flutter_windows_angle_opengl_es_plugin")
 
+list(APPEND PLUGIN_SOURCES
+  "angle_surface_manager.cpp"
+  "angle_surface_manager.h"
+  "flutter_windows_angle_opengl_es_plugin.cpp"
+  "flutter_windows_angle_opengl_es_plugin.h"
+)
+
 # Define the plugin library target. Its name must not be changed (see comment
 # on PLUGIN_NAME above).
 add_library(${PLUGIN_NAME} SHARED
-  "angle_surface_manager.cc"
-  "flutter_windows_angle_opengl_es_plugin.cc"
-  "flutter_windows_angle_opengl_es_plugin_c_api.cc"
+  "include/flutter_windows_angle_opengl_es/flutter_windows_angle_opengl_es_plugin_c_api.h"
+  "flutter_windows_angle_opengl_es_plugin_c_api.cpp"
   ${PLUGIN_SOURCES}
 )
 
@@ -33,6 +40,30 @@ set_target_properties(${PLUGIN_NAME} PROPERTIES
   CXX_VISIBILITY_PRESET hidden)
 target_compile_definitions(${PLUGIN_NAME} PRIVATE FLUTTER_PLUGIN_IMPL)
 
+if(DEFINED FLUTTER_TARGET_PLATFORM)
+  if(FLUTTER_TARGET_PLATFORM STREQUAL "windows-x64")
+    set(ANGLE_ARCH "x64")
+  elseif(FLUTTER_TARGET_PLATFORM STREQUAL "windows-arm64")
+    set(ANGLE_ARCH "arm64")
+  else()
+    message(FATAL_ERROR "Unsupported Flutter target: ${FLUTTER_TARGET_PLATFORM}")
+  endif()
+elseif(CMAKE_GENERATOR_PLATFORM)
+  string(TOLOWER "${CMAKE_GENERATOR_PLATFORM}" ANGLE_ARCH)
+  if(NOT ANGLE_ARCH MATCHES "^(x64|arm64)$")
+    message(FATAL_ERROR "Unsupported Windows platform: ${CMAKE_GENERATOR_PLATFORM}")
+  endif()
+else()
+  message(FATAL_ERROR "Windows target architecture was not provided")
+endif()
+if(CMAKE_GENERATOR_PLATFORM)
+  string(TOLOWER "${CMAKE_GENERATOR_PLATFORM}" GENERATOR_ARCH)
+  if(NOT GENERATOR_ARCH STREQUAL ANGLE_ARCH)
+    message(FATAL_ERROR "Flutter target ${ANGLE_ARCH} conflicts with CMake platform ${GENERATOR_ARCH}")
+  endif()
+endif()
+set(ANGLE_BIN "${CMAKE_CURRENT_SOURCE_DIR}/bin/${ANGLE_ARCH}")
+
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include/external")
 
 # Source include directories and library dependencies. Add any plugin-specific
@@ -40,74 +71,23 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include/external")
 target_include_directories(${PLUGIN_NAME} INTERFACE
   "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_link_libraries(${PLUGIN_NAME} PRIVATE
+  d3d11.lib
+  dxgi.lib
   flutter
   flutter_wrapper_plugin
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/lib/libEGL.dll.lib"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/lib/libGLESv2.dll.lib"
+  "${ANGLE_BIN}/lib/libEGL.dll.lib"
+  "${ANGLE_BIN}/lib/libGLESv2.dll.lib"
 )
 
 # List of absolute paths to libraries that should be bundled with the plugin.
 # This list could contain prebuilt libraries, or libraries created by an
 # external build triggered from this build file.
 set(flutter_windows_angle_opengl_es_bundled_libraries
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-console-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-console-l1-2-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-datetime-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-debug-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-errorhandling-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-fibers-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-file-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-file-l1-2-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-file-l2-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-handle-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-heap-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-interlocked-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-libraryloader-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-localization-l1-2-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-memory-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-namedpipe-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-processenvironment-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-processthreads-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-processthreads-l1-1-1.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-profile-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-rtlsupport-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-string-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-synch-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-synch-l1-2-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-sysinfo-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-timezone-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-core-util-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-conio-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-convert-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-environment-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-filesystem-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-heap-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-locale-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-math-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-multibyte-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-private-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-process-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-runtime-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-stdio-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-string-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-time-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-crt-utility-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-downlevel-kernel32-l2-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/api-ms-win-eventing-provider-l1-1-0.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/d3dcompiler_47.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/libc++.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/libEGL.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/libGLESv2.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/ucrtbase.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/ucrtbased.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/vccorlib140.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/vccorlib140d.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/vcruntime140.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/vcruntime140d.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/vcruntime140_1.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/vcruntime140_1d.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/vk_swiftshader.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/vulkan-1.dll"
-  "${CMAKE_CURRENT_SOURCE_DIR}/bin/dll/zlib.dll"
+  "${ANGLE_BIN}/dll/d3dcompiler_47.dll"
+  "${ANGLE_BIN}/dll/libEGL.dll"
+  "${ANGLE_BIN}/dll/libGLESv2.dll"
+  "${ANGLE_BIN}/dll/vulkan-1.dll"
+  "${ANGLE_BIN}/dll/vk_swiftshader.dll"
+  "${ANGLE_BIN}/dll/vk_swiftshader_icd.json"
   PARENT_SCOPE
 )

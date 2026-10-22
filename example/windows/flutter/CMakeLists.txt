@@ -10,6 +10,15 @@ include(${EPHEMERAL_DIR}/generated_config.cmake)
 # https://github.com/flutter/flutter/issues/57146.
 set(WRAPPER_ROOT "${EPHEMERAL_DIR}/cpp_client_wrapper")
 
+if(NOT DEFINED FLUTTER_TARGET_PLATFORM)
+  string(TOLOWER "${CMAKE_GENERATOR_PLATFORM}" FLUTTER_ARCH)
+  if(FLUTTER_ARCH MATCHES "^(x64|arm64)$")
+    set(FLUTTER_TARGET_PLATFORM "windows-${FLUTTER_ARCH}")
+  else()
+    message(FATAL_ERROR "Windows target architecture was not provided")
+  endif()
+endif()
+
 # === Flutter Library ===
 set(FLUTTER_LIBRARY "${EPHEMERAL_DIR}/flutter_windows.dll")
 
@@ -92,7 +101,7 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E env
     ${FLUTTER_TOOL_ENVIRONMENT}
     "${FLUTTER_ROOT}/packages/flutter_tools/bin/tool_backend.bat"
-      windows-x64 $<CONFIG>
+      ${FLUTTER_TARGET_PLATFORM} $<CONFIG>
   VERBATIM
 )
 add_custom_target(flutter_assemble DEPENDS
